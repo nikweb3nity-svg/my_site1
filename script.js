@@ -79,7 +79,13 @@
       sphere.xy = sphereCenter + (sphere.xy - sphereCenter) * mix(1.0, 1.15, uDesktopSphereTreatment);
       vec3 ribbon = correctAspect(aRibbon, 0.145);
       vec3 signal = correctAspect(aSignal, 0.38);
-      vec3 vortex = correctAspect(aVortex, 0.42);
+      vec3 vortexSource = aVortex;
+      float globeSpin = uTime * (0.11 + 0.05 * clamp(vortexSource.z + 1.0, 0.0, 1.0));
+      float vortexX = vortexSource.x - 0.42;
+      float vortexZ = vortexSource.z;
+      vortexSource.x = 0.42 + vortexX * cos(globeSpin) - vortexZ * sin(globeSpin);
+      vortexSource.z = vortexX * sin(globeSpin) + vortexZ * cos(globeSpin);
+      vec3 vortex = correctAspect(vortexSource, 0.42);
       vec3 position;
       if (stage < 1.0) position = mix(sphere, ribbon, phase);
       else if (stage < 2.0) position = mix(ribbon, signal, phase);
@@ -93,7 +99,7 @@
       gl_PointSize = clamp(aSize * (1.08 + depth * 0.22), 1.8, 9.0);
       vColor = aColor;
       float readability = min(min(outsideExclusion(position.xy, uExclusion0), outsideExclusion(position.xy, uExclusion1)), min(outsideExclusion(position.xy, uExclusion2), outsideExclusion(position.xy, uExclusion3)));
-      vAlpha = (0.38 + 0.45 * (depth * 0.5 + 0.5)) * mix(0.25, 1.0, readability);
+      vAlpha = (0.38 + 0.45 * (depth * 0.5 + 0.5)) * mix(mix(0.38, 0.25, uDesktopSphereTreatment), 1.0, readability);
     }
   `;
 
@@ -180,11 +186,14 @@
     const data = new Float32Array(count * 3);
     for (let i = 0; i < count; i += 1) {
       const ambient = i % 12 === 0;
-      const radius = Math.sqrt(random()) * 0.95;
-      const angle = radius * 13 + random() * 1.3;
-      data[i * 3] = ambient ? random() * 2.7 - 1.35 : 0.42 + Math.cos(angle) * radius;
-      data[i * 3 + 1] = ambient ? random() * 2.2 - 1.1 : Math.sin(angle) * radius * 0.78;
-      data[i * 3 + 2] = ambient ? -0.8 : 1 - radius * 1.7 + normalNoise() * 0.12;
+      const globeCenter = 0.42;
+      const longitude = random() * Math.PI * 2;
+      const latitude = random() * 2 - 1;
+      const latitudeRing = Math.sqrt(1 - latitude * latitude);
+      const globeRadius = 0.62 + normalNoise() * 0.035;
+      data[i * 3] = ambient ? random() * 2.7 - 1.35 : globeCenter + Math.cos(longitude) * latitudeRing * globeRadius;
+      data[i * 3 + 1] = ambient ? random() * 2.2 - 1.1 : Math.sin(longitude) * latitudeRing * globeRadius;
+      data[i * 3 + 2] = ambient ? -0.8 : latitude;
     }
     return data;
   };
