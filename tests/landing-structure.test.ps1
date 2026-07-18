@@ -25,7 +25,7 @@ foreach ($marker in @('requestAnimationFrame', 'IntersectionObserver', 'aria-exp
   if ($script -notmatch [regex]::Escape($marker)) { throw "JavaScript is missing $marker" }
 }
 
-foreach ($marker in @("getContext('webgl'", 'const PARTICLE_COUNT = 12000', 'createSphereShape', 'createRibbonShape', 'uScroll', 'gl.POINTS')) {
+foreach ($marker in @("getContext('webgl'", 'const PARTICLE_COUNT = 24000', 'window.innerWidth < 760 ? 14400 : PARTICLE_COUNT', 'createSphereShape', 'createRibbonShape', 'uScroll', 'gl.POINTS')) {
   if ($script -notmatch [regex]::Escape($marker)) { throw "Particle engine is missing $marker" }
 }
 

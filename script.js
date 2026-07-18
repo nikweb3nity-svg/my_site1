@@ -23,7 +23,7 @@
   const gl = canvas.getContext('webgl', { alpha: true, antialias: false, powerPreference: 'high-performance' });
   if (!gl) return;
 
-  const PARTICLE_COUNT = 12000;
+  const PARTICLE_COUNT = 24000;
   const vertexShaderSource = `
     precision highp float;
     attribute vec3 aSphere;
@@ -296,7 +296,7 @@
     gl.uniform1f(uniforms.pixelRatio, renderPixelRatio);
     gl.uniform2f(uniforms.pointer, pointer.x, pointer.y);
     uniforms.exclusions.forEach((location, index) => gl.uniform4fv(location, exclusionRects[index]));
-    const drawCount = window.innerWidth < 760 ? 7200 : PARTICLE_COUNT;
+    const drawCount = window.innerWidth < 760 ? 14400 : PARTICLE_COUNT;
     gl.drawArrays(gl.POINTS, 0, drawCount);
     if (!reduceMotion) requestAnimationFrame(render);
   };
