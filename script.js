@@ -37,6 +37,7 @@
     uniform float uAspect;
     uniform float uDesktopSphereShift;
     uniform float uDesktopSphereTreatment;
+    uniform float uPixelRatio;
     uniform vec2 uPointer;
     uniform vec4 uExclusion0;
     uniform vec4 uExclusion1;
@@ -96,7 +97,7 @@
       position.y += cos(uTime * 0.27 + depth * 7.0 + position.x * 3.0) * 0.010;
 
       gl_Position = vec4(position.xy, 0.0, 1.0);
-      gl_PointSize = clamp(aSize * (1.08 + depth * 0.22), 1.8, 9.0);
+      gl_PointSize = clamp(aSize * (1.08 + depth * 0.22), 1.8, 9.0) * uPixelRatio;
       vColor = aColor;
       float readability = min(min(outsideExclusion(position.xy, uExclusion0), outsideExclusion(position.xy, uExclusion1)), min(outsideExclusion(position.xy, uExclusion2), outsideExclusion(position.xy, uExclusion3)));
       vAlpha = (0.38 + 0.45 * (depth * 0.5 + 0.5)) * mix(mix(0.38, 0.25, uDesktopSphereTreatment), 1.0, readability);
@@ -231,11 +232,13 @@
     aspect: gl.getUniformLocation(program, 'uAspect'),
     desktopSphereShift: gl.getUniformLocation(program, 'uDesktopSphereShift'),
     desktopSphereTreatment: gl.getUniformLocation(program, 'uDesktopSphereTreatment'),
+    pixelRatio: gl.getUniformLocation(program, 'uPixelRatio'),
     pointer: gl.getUniformLocation(program, 'uPointer'),
     exclusions: [0, 1, 2, 3].map((index) => gl.getUniformLocation(program, `uExclusion${index}`))
   };
   let scrollTarget = 0;
   let scrollCurrent = 0;
+  let renderPixelRatio = 1;
   const pointer = { x: 0, y: 0 };
   let exclusionRects = Array.from({ length: 4 }, () => [2, 2, 2, 2]);
 
@@ -255,9 +258,10 @@
   };
 
   const resizeCanvas = () => {
-    const ratio = Math.min(window.devicePixelRatio || 1, 1);
-    canvas.width = Math.round(window.innerWidth * ratio);
-    canvas.height = Math.round(window.innerHeight * ratio);
+    const maxPixelRatio = window.innerWidth <= 760 ? 3 : 2;
+    renderPixelRatio = Math.min(window.devicePixelRatio || 1, maxPixelRatio);
+    canvas.width = Math.round(window.innerWidth * renderPixelRatio);
+    canvas.height = Math.round(window.innerHeight * renderPixelRatio);
     gl.viewport(0, 0, canvas.width, canvas.height);
   };
   const updateScrollTarget = () => {
@@ -289,6 +293,7 @@
     gl.uniform1f(uniforms.aspect, window.innerWidth / window.innerHeight);
     gl.uniform1f(uniforms.desktopSphereShift, window.innerWidth > 760 ? 0.4 : 0);
     gl.uniform1f(uniforms.desktopSphereTreatment, window.innerWidth > 760 ? 1 : 0);
+    gl.uniform1f(uniforms.pixelRatio, renderPixelRatio);
     gl.uniform2f(uniforms.pointer, pointer.x, pointer.y);
     uniforms.exclusions.forEach((location, index) => gl.uniform4fv(location, exclusionRects[index]));
     const drawCount = window.innerWidth < 760 ? 7200 : PARTICLE_COUNT;
@@ -330,7 +335,8 @@
 
   const resizeApproachSphere = () => {
     const rect = sphereCanvas.getBoundingClientRect();
-    const ratio = Math.min(window.devicePixelRatio || 1, 1.5);
+    const spherePixelRatioLimit = window.innerWidth <= 760 ? 3 : 2;
+    const ratio = Math.min(window.devicePixelRatio || 1, spherePixelRatioLimit);
     sphereCanvas.width = Math.round(rect.width * ratio);
     sphereCanvas.height = Math.round(rect.height * ratio);
     sphereContext.setTransform(ratio, 0, 0, ratio, 0, 0);

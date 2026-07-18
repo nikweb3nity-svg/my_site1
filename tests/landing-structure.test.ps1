@@ -29,7 +29,14 @@ foreach ($marker in @("getContext('webgl'", 'const PARTICLE_COUNT = 12000', 'cre
   if ($script -notmatch [regex]::Escape($marker)) { throw "Particle engine is missing $marker" }
 }
 
-if ($script -notmatch [regex]::Escape('Math.min(window.devicePixelRatio || 1, 1)')) { throw 'WebGL buffer must be capped at 1x pixel density' }
+foreach ($marker in @(
+  'let renderPixelRatio = 1',
+  'const maxPixelRatio = window.innerWidth <= 760 ? 3 : 2',
+  'Math.min(window.devicePixelRatio || 1, maxPixelRatio)',
+  'const spherePixelRatioLimit = window.innerWidth <= 760 ? 3 : 2'
+)) {
+  if ($script -notmatch [regex]::Escape($marker)) { throw "HiDPI particle rendering is missing $marker" }
+}
 
 if ($css -notmatch [regex]::Escape('position: fixed')) { throw 'Canvas stage must be fixed to the viewport' }
 
