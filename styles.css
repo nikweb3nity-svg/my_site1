@@ -65,7 +65,7 @@ h1 em, .contact h2 em { color: var(--color-saffron-spark); font-style: normal; }
 }
 .approach-graphic {
   position: relative;
-  width: min(100%, 590px);
+  width: min(112%, 660px);
   aspect-ratio: 1;
   justify-self: end;
 }
@@ -73,10 +73,11 @@ h1 em, .contact h2 em { color: var(--color-saffron-spark); font-style: normal; }
   display: block;
   width: 100%;
   height: 100%;
-  touch-action: none;
-  cursor: grab;
+  pointer-events: none;
 }
-.approach-particle-sphere:active { cursor: grabbing; }
+@media (hover: hover) and (pointer: fine) {
+  .approach-particle-sphere { pointer-events: auto; }
+}
 .approach-copy {
   width: 100%;
   max-width: 700px;
@@ -154,7 +155,7 @@ h1 em, .contact h2 em { color: var(--color-saffron-spark); font-style: normal; }
 @media (max-width: 760px) { .container { width: min(calc(100% - 40px), var(--page-max-width)); }.signal-stage { opacity: .7; }.nav { height: 82px; }.menu-toggle { display: block; z-index: 3; }.nav-links { position: absolute; top: 74px; right: 20px; left: 20px; display: none; flex-direction: column; align-items: stretch; gap: 0; padding: 18px; background: #080808; border-radius: 24px; }.nav-links.is-open { display: flex; }.nav-links a { padding: 13px 8px; }.nav-links .button { margin-top: 8px; justify-content: center; }.hero { display: flex; flex-direction: column; align-items: stretch; min-height: auto; padding: 145px 0 50px; }.hero-copy { order: 1; }.hero-visual { order: 2; min-height: 350px; margin: 15px -10px 0; }.hero-bottom { flex-direction: column; align-items: start; gap: 27px; } h1 { margin-bottom: 36px; font-size: clamp(54px, 15vw, 78px); }.split, .approach { grid-template-columns: 1fr; gap: 42px; }.section-head { display: block; margin-bottom: 45px; }.project { min-height: 290px; grid-template-columns: 1fr; padding: 36px 0; }.project h3 { font-size: clamp(58px, 19vw, 90px); }.project > p { max-width: 220px; }.project > a { top: 40px; }.approach { padding-top: 145px; }.approach-graphic { width: 75%; margin: 0 auto; order: 2; }.approach-copy { order: 1; }.people { grid-template-columns: 1fr; gap: 50px; }.footer { flex-wrap: wrap; gap: 20px; }.footer p { order: 3; width: 100%; } }
 @media (max-width: 1024px) and (min-width: 761px) {
   .approach { gap: 44px; }
-  .approach-graphic { width: min(100%, 440px); }
+  .approach-graphic { width: min(112%, 480px); }
   .approach-copy h2 { font-size: clamp(50px, 6.3vw, 64px); }
   .approach-copy > .approach-description { font-size: 18px; }
 }
@@ -174,6 +175,11 @@ h1 em, .contact h2 em { color: var(--color-saffron-spark); font-style: normal; }
     width: min(82vw, 430px);
     margin: 0 auto;
     justify-self: center;
+  }
+  .approach-graphic.reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
   .approach-copy h2 {
     max-width: 12ch;

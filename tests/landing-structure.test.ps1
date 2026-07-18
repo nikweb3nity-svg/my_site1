@@ -54,6 +54,21 @@ foreach ($marker in @('approach-particle-sphere', 'APPROACH_PARTICLE_COUNT = 360
   if (($html + $script) -notmatch [regex]::Escape($marker)) { throw "Approach particle sphere is missing $marker" }
 }
 
+foreach ($marker in @(
+  'aria-hidden="true"',
+  'twinkleSpeed',
+  'twinkleAmplitude',
+  "matchMedia('(hover: hover) and (pointer: fine)')",
+  'pointerRadius',
+  'reduceApproachMotion ? 0 :',
+  '.approach-graphic.reveal',
+  'width: min(112%, 660px)'
+)) {
+  if (($html + $css + $script) -notmatch [regex]::Escape($marker)) { throw "Approach galaxy behavior is missing $marker" }
+}
+
+if ($script -match "addEventListener\('touchmove'") { throw 'Approach sphere must not react to touch movement' }
+
 if ([regex]::Matches($html, 'id="approach"').Count -ne 1) {
   throw 'Landing page must contain exactly one approach section'
 }

@@ -309,11 +309,13 @@
   const sphereContext = sphereCanvas.getContext('2d');
   const APPROACH_PARTICLE_COUNT = 3600;
   const reduceApproachMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const preciseApproachPointer = window.matchMedia('(hover: hover) and (pointer: fine)');
   const spherePalette = ['#8052ff', '#ffb829', '#15846e', '#d05cff', '#398cff', '#fff1d2'];
-  const approachPointer = { x: 0, y: 0, targetX: 0, targetY: 0 };
+  const approachPointer = { x: 0, y: 0, targetX: 0, targetY: 0, strength: 0, targetStrength: 0 };
   let sphereParticles = [];
   let sphereSize = 0;
   let sphereVisible = true;
+  let sphereGlow = null;
 
   const createApproachParticleSphere = (count) => {
     const particles = [];
@@ -327,7 +329,15 @@
         z: Math.sin(vertical) * Math.sin(theta) * radius,
         color: spherePalette[Math.floor(Math.random() * spherePalette.length)],
         size: index % 101 === 0 ? 4.9 : 0.75 + Math.random() * 2.2,
-        phase: Math.random() * Math.PI * 2
+        phase: Math.random() * Math.PI * 2,
+        layer: index % 3,
+        twinkleSpeed: Math.PI * 2 / (2000 + Math.random() * 4000),
+        twinkleAmplitude: 0.08 + Math.random() * 0.13,
+        projectedX: 0,
+        projectedY: 0,
+        projectedZ: 0,
+        projectedSize: 0,
+        projectedOpacity: 0
       });
     }
     return particles;
@@ -341,22 +351,35 @@
     sphereCanvas.height = Math.round(rect.height * ratio);
     sphereContext.setTransform(ratio, 0, 0, ratio, 0, 0);
     sphereSize = Math.min(rect.width, rect.height);
+    sphereGlow = sphereContext.createRadialGradient(
+      rect.width * 0.5,
+      rect.height * 0.5,
+      0,
+      rect.width * 0.5,
+      rect.height * 0.5,
+      sphereSize * 0.44
+    );
+    sphereGlow.addColorStop(0, 'rgba(128, 82, 255, 0.035)');
+    sphereGlow.addColorStop(0.55, 'rgba(57, 140, 255, 0.018)');
+    sphereGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
   };
 
   const trackApproachPointer = (clientX, clientY) => {
     const rect = sphereCanvas.getBoundingClientRect();
-    approachPointer.targetX = ((clientX - rect.left) / rect.width - 0.5) * 2;
-    approachPointer.targetY = ((clientY - rect.top) / rect.height - 0.5) * 2;
+    approachPointer.targetX = clientX - rect.left;
+    approachPointer.targetY = clientY - rect.top;
+    approachPointer.targetStrength = 1;
   };
 
-  sphereCanvas.addEventListener('pointermove', (event) => trackApproachPointer(event.clientX, event.clientY));
-  sphereCanvas.addEventListener('pointerleave', () => { approachPointer.targetX = 0; approachPointer.targetY = 0; });
-  sphereCanvas.addEventListener('touchmove', (event) => {
-    const touch = event.touches[0];
-    if (touch) trackApproachPointer(touch.clientX, touch.clientY);
-  }, { passive: true });
+  if (preciseApproachPointer.matches && !reduceApproachMotion) {
+    sphereCanvas.addEventListener('pointermove', (event) => trackApproachPointer(event.clientX, event.clientY));
+    sphereCanvas.addEventListener('pointerenter', (event) => trackApproachPointer(event.clientX, event.clientY));
+    sphereCanvas.addEventListener('pointerleave', () => { approachPointer.targetStrength = 0; });
+  }
   window.addEventListener('resize', resizeApproachSphere, { passive: true });
-  new IntersectionObserver(([entry]) => { sphereVisible = entry.isIntersecting; }, { threshold: 0.05 }).observe(sphereCanvas);
+  if (window.innerWidth > 760) {
+    new IntersectionObserver(([entry]) => { sphereVisible = entry.isIntersecting; }, { threshold: 0.05 }).observe(sphereCanvas);
+  }
 
   sphereParticles = createApproachParticleSphere(APPROACH_PARTICLE_COUNT);
   resizeApproachSphere();
@@ -366,36 +389,71 @@
     const height = sphereCanvas.clientHeight;
     sphereContext.clearRect(0, 0, width, height);
     if (sphereVisible) {
-      approachPointer.x += (approachPointer.targetX - approachPointer.x) * 0.045;
-      approachPointer.y += (approachPointer.targetY - approachPointer.y) * 0.045;
-      const rotationY = (reduceApproachMotion ? 0.18 : time * 0.00013) + approachPointer.x * 0.55;
-      const rotationX = 0.19 + approachPointer.y * 0.38;
+      approachPointer.x += (approachPointer.targetX - approachPointer.x) * 0.09;
+      approachPointer.y += (approachPointer.targetY - approachPointer.y) * 0.09;
+      approachPointer.strength += (approachPointer.targetStrength - approachPointer.strength) * 0.07;
+      const motionTime = reduceApproachMotion ? 0 : time;
+      const rotationY = reduceApproachMotion ? 0.18 : time * 0.000105;
+      const rotationX = 0.19;
       const radius = sphereSize * 0.42;
       const centreX = width * 0.5;
       const centreY = height * 0.5;
-      const depthSorted = sphereParticles.map((particle) => {
-        const rotatedX = particle.x * Math.cos(rotationY) - particle.z * Math.sin(rotationY);
-        const rotatedZ = particle.x * Math.sin(rotationY) + particle.z * Math.cos(rotationY);
-        return {
-          ...particle,
-          x: rotatedX,
-          y: particle.y * Math.cos(rotationX) - rotatedZ * Math.sin(rotationX),
-          z: particle.y * Math.sin(rotationX) + rotatedZ * Math.cos(rotationX)
-        };
-      }).sort((first, second) => first.z - second.z);
+      const pointerRadius = sphereSize * 0.19;
+      const layerRotation = [rotationY * 0.91, rotationY, rotationY * 1.08];
+      const layerSin = [Math.sin(layerRotation[0]), Math.sin(layerRotation[1]), Math.sin(layerRotation[2])];
+      const layerCos = [Math.cos(layerRotation[0]), Math.cos(layerRotation[1]), Math.cos(layerRotation[2])];
+      const sinX = Math.sin(rotationX);
+      const cosX = Math.cos(rotationX);
 
-      depthSorted.forEach((particle) => {
-        const perspective = 0.58 + (particle.z + 1) * 0.27;
-        const x = centreX + particle.x * radius * perspective;
-        const y = centreY + particle.y * radius * perspective;
-        const size = particle.size * (0.7 + perspective * 0.9);
-        const opacity = 0.13 + (particle.z + 1) * 0.31;
+      if (sphereGlow) {
+        sphereContext.fillStyle = sphereGlow;
+        sphereContext.fillRect(centreX - radius, centreY - radius, radius * 2, radius * 2);
+      }
+
+      for (let index = 0; index < sphereParticles.length; index += 1) {
+        const particle = sphereParticles[index];
+        const sinY = layerSin[particle.layer];
+        const cosY = layerCos[particle.layer];
+        const rotatedX = particle.x * cosY - particle.z * sinY;
+        const rotatedZ = particle.x * sinY + particle.z * cosY;
+        const rotatedY = particle.y * cosX - rotatedZ * sinX;
+        const depthZ = particle.y * sinX + rotatedZ * cosX;
+        const depth = Math.max(0, Math.min(1, (depthZ + 1) * 0.5));
+        const perspective = 0.62 + depth * 0.52;
+        let x = centreX + rotatedX * radius * perspective;
+        let y = centreY + rotatedY * radius * perspective;
+
+        if (approachPointer.strength > 0.001) {
+          const deltaX = approachPointer.x - x;
+          const deltaY = approachPointer.y - y;
+          const distance = Math.hypot(deltaX, deltaY);
+          if (distance < pointerRadius) {
+            const influence = 1 - distance / pointerRadius;
+            const pull = influence * influence * approachPointer.strength * (0.045 + depth * 0.035);
+            x += deltaX * pull;
+            y += deltaY * pull;
+          }
+        }
+
+        const twinkle = reduceApproachMotion ? 0 : Math.sin(motionTime * particle.twinkleSpeed + particle.phase);
+        const depthScale = 0.62 + depth * 1.08;
+        particle.projectedX = x;
+        particle.projectedY = y;
+        particle.projectedZ = depthZ;
+        particle.projectedSize = particle.size * depthScale * (1 + twinkle * particle.twinkleAmplitude * 0.16);
+        particle.projectedOpacity = (0.1 + depth * 0.58) * (1 + twinkle * particle.twinkleAmplitude);
+      }
+
+      sphereParticles.sort((first, second) => first.projectedZ - second.projectedZ);
+
+      sphereParticles.forEach((particle) => {
+        const size = particle.projectedSize;
         sphereContext.save();
-        sphereContext.translate(x, y);
+        sphereContext.translate(particle.projectedX, particle.projectedY);
         sphereContext.rotate(particle.phase + rotationY * 0.8);
         sphereContext.strokeStyle = particle.color;
-        sphereContext.globalAlpha = opacity;
-        sphereContext.lineWidth = particle.size > 4 ? 1.1 : 0.65;
+        sphereContext.globalAlpha = particle.projectedOpacity;
+        sphereContext.lineWidth = particle.size > 4 ? 1.15 : 0.55 + Math.max(0, particle.projectedZ) * 0.2;
         sphereContext.beginPath();
         sphereContext.moveTo(0, -size);
         sphereContext.lineTo(size * 0.86, size * 0.68);
