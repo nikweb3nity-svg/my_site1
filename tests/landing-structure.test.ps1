@@ -37,7 +37,7 @@ foreach ($marker in @('.copy-shield', 'text-shadow:', 'uExclusion0', 'updateExcl
   if (($css + $script) -notmatch [regex]::Escape($marker)) { throw "Readability system is missing $marker" }
 }
 
-foreach ($marker in @('correctAspect', 'correctAspect(aSphere, 0.68)', 'correctAspect(aSignal, 0.38)', 'correctAspect(aVortex, 0.42)')) {
+foreach ($marker in @('correctAspect', 'correctAspect(sphereSource, 0.68)', 'correctAspect(aSignal, 0.38)', 'correctAspect(aVortex, 0.42)')) {
   if ($script -notmatch [regex]::Escape($marker)) { throw "Aspect-ratio correction is missing $marker" }
 }
 

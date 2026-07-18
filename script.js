@@ -34,8 +34,10 @@
     attribute float aSize;
     uniform float uTime;
     uniform float uScroll;
-    uniform vec2 uMouse;
     uniform float uAspect;
+    uniform float uDesktopSphereShift;
+    uniform float uDesktopSphereTreatment;
+    uniform vec2 uPointer;
     uniform vec4 uExclusion0;
     uniform vec4 uExclusion1;
     uniform vec4 uExclusion2;
@@ -59,7 +61,22 @@
     void main() {
       float stage = clamp(uScroll, 0.0, 2.999);
       float phase = ease(fract(stage));
-      vec3 sphere = correctAspect(aSphere, 0.68);
+      vec2 sphereCenter = vec2(0.68 - uDesktopSphereShift, 0.0);
+      float pointerNearSphere = (1.0 - smoothstep(0.55, 0.85, distance(uPointer, sphereCenter))) * uDesktopSphereTreatment;
+      float rotateY = uPointer.x * 0.24 * pointerNearSphere;
+      float rotateX = uPointer.y * 0.18 * pointerNearSphere;
+      vec3 sphereSource = aSphere;
+      float sphereX = sphereSource.x - 0.68;
+      float sphereZ = sphereSource.z;
+      sphereSource.x = 0.68 + sphereX * cos(rotateY) - sphereZ * sin(rotateY);
+      sphereSource.z = sphereX * sin(rotateY) + sphereZ * cos(rotateY);
+      float sphereY = sphereSource.y;
+      sphereSource.y = sphereY * cos(rotateX) - sphereSource.z * sin(rotateX);
+      sphereSource.z = sphereY * sin(rotateX) + sphereSource.z * cos(rotateX);
+      vec3 sphere = correctAspect(sphereSource, 0.68);
+      sphere.y *= mix(1.0, 1.0 / 1.12, uDesktopSphereTreatment);
+      sphere.x -= uDesktopSphereShift;
+      sphere.xy = sphereCenter + (sphere.xy - sphereCenter) * mix(1.0, 1.15, uDesktopSphereTreatment);
       vec3 ribbon = correctAspect(aRibbon, 0.145);
       vec3 signal = correctAspect(aSignal, 0.38);
       vec3 vortex = correctAspect(aVortex, 0.42);
@@ -71,7 +88,6 @@
       float depth = position.z;
       position.x += sin(uTime * 0.31 + depth * 9.0 + position.y * 4.0) * 0.012;
       position.y += cos(uTime * 0.27 + depth * 7.0 + position.x * 3.0) * 0.010;
-      position.xy += uMouse * (0.018 + depth * 0.025);
 
       gl_Position = vec4(position.xy, 0.0, 1.0);
       gl_PointSize = clamp(aSize * (1.08 + depth * 0.22), 1.8, 9.0);
@@ -117,14 +133,16 @@
 
   const createSphereShape = (count) => {
     const data = new Float32Array(count * 3);
+    const desktopSphereAmbient = window.innerWidth > 760;
     for (let i = 0; i < count; i += 1) {
       const ambient = i % 11 === 0;
       const theta = random() * Math.PI * 2;
       const z = random() * 2 - 1;
       const ring = Math.sqrt(1 - z * z);
       const radius = 0.59 + normalNoise() * 0.055;
-      data[i * 3] = ambient ? random() * 2.7 - 1.35 : 0.68 + Math.cos(theta) * ring * radius;
-      data[i * 3 + 1] = ambient ? random() * 2.2 - 1.1 : Math.sin(theta) * ring * radius * 1.12;
+      const ambientRadius = ambient && desktopSphereAmbient ? 0.74 + random() * 0.9 : 0;
+      data[i * 3] = ambient ? (desktopSphereAmbient ? 0.68 + Math.cos(theta) * ambientRadius : random() * 2.7 - 1.35) : 0.68 + Math.cos(theta) * ring * radius;
+      data[i * 3 + 1] = ambient ? (desktopSphereAmbient ? Math.sin(theta) * ambientRadius * 1.12 : random() * 2.2 - 1.1) : Math.sin(theta) * ring * radius * 1.12;
       data[i * 3 + 2] = ambient ? random() * 0.4 - 0.8 : z;
     }
     return data;
@@ -201,14 +219,15 @@
   const uniforms = {
     time: gl.getUniformLocation(program, 'uTime'),
     scroll: gl.getUniformLocation(program, 'uScroll'),
-    mouse: gl.getUniformLocation(program, 'uMouse'),
     aspect: gl.getUniformLocation(program, 'uAspect'),
+    desktopSphereShift: gl.getUniformLocation(program, 'uDesktopSphereShift'),
+    desktopSphereTreatment: gl.getUniformLocation(program, 'uDesktopSphereTreatment'),
+    pointer: gl.getUniformLocation(program, 'uPointer'),
     exclusions: [0, 1, 2, 3].map((index) => gl.getUniformLocation(program, `uExclusion${index}`))
   };
-  let pointer = { x: 0, y: 0 };
-  let pointerTarget = { x: 0, y: 0 };
   let scrollTarget = 0;
   let scrollCurrent = 0;
+  const pointer = { x: 0, y: 0 };
   let exclusionRects = Array.from({ length: 4 }, () => [2, 2, 2, 2]);
 
   const updateExclusionZones = () => {
@@ -240,8 +259,11 @@
   window.addEventListener('resize', updateExclusionZones, { passive: true });
   window.addEventListener('scroll', () => { updateScrollTarget(); updateExclusionZones(); }, { passive: true });
   window.addEventListener('pointermove', (event) => {
-    pointerTarget.x = (event.clientX / window.innerWidth - 0.5) * 2;
-    pointerTarget.y = (0.5 - event.clientY / window.innerHeight) * 2;
+    pointer.x = (event.clientX / window.innerWidth - 0.5) * 2;
+    pointer.y = (0.5 - event.clientY / window.innerHeight) * 2;
+  }, { passive: true });
+  window.addEventListener('mouseout', (event) => {
+    if (!event.relatedTarget) { pointer.x = 2; pointer.y = 2; }
   }, { passive: true });
   resizeCanvas();
   updateScrollTarget();
@@ -251,14 +273,14 @@
   gl.clearColor(0, 0, 0, 0);
 
   const render = (time) => {
-    pointer.x += (pointerTarget.x - pointer.x) * 0.035;
-    pointer.y += (pointerTarget.y - pointer.y) * 0.035;
     scrollCurrent += (scrollTarget - scrollCurrent) * 0.045;
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.uniform1f(uniforms.time, reduceMotion ? 0 : time * 0.001);
     gl.uniform1f(uniforms.scroll, scrollCurrent);
-    gl.uniform2f(uniforms.mouse, pointer.x, pointer.y);
     gl.uniform1f(uniforms.aspect, window.innerWidth / window.innerHeight);
+    gl.uniform1f(uniforms.desktopSphereShift, window.innerWidth > 760 ? 0.4 : 0);
+    gl.uniform1f(uniforms.desktopSphereTreatment, window.innerWidth > 760 ? 1 : 0);
+    gl.uniform2f(uniforms.pointer, pointer.x, pointer.y);
     uniforms.exclusions.forEach((location, index) => gl.uniform4fv(location, exclusionRects[index]));
     const drawCount = window.innerWidth < 760 ? 7200 : PARTICLE_COUNT;
     gl.drawArrays(gl.POINTS, 0, drawCount);
