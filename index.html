@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Сигнал — студия веб-дизайна и цифровой айдентики из России." />
+    <title>Сигнал — студия веб-дизайна</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <canvas id="signal-canvas" class="signal-stage" aria-label="Тысячи цветных треугольников собираются в динамические формы"></canvas>
+    <header class="site-header">
+      <nav class="nav container" aria-label="Основная навигация">
+        <a class="brand" href="#top" aria-label="Сигнал — на главную">
+          <svg class="brand-mark" viewBox="0 0 34 34" aria-hidden="true"><path d="M3 29 17 4l14 25-14-7z" /></svg>
+          <span>сигнал</span>
+        </a>
+        <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="site-menu"><span></span><span></span></button>
+        <div class="nav-links" id="site-menu">
+          <a href="#work">Работы</a>
+          <a href="#approach">Подход</a>
+          <a href="#team">Команда</a>
+          <a class="button button-small" href="#contact">Обсудить проект</a>
+        </div>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero container">
+        <div class="hero-copy reveal">
+          <p class="eyebrow">АВТОРСКАЯ ВЕБ-СТУДИЯ · РОССИЯ / МИР</p>
+          <h1>Делаем сайты,<br />в которые хочется<br /><em>вернуться.</em></h1>
+          <div class="hero-bottom">
+            <p class="copy-shield">Создаем сайты под ключ: от структуры и визуальной концепции до разработки, адаптации и запуска.</p>
+            <a class="button" href="#contact">ОБСУДИТЬ ПРОЕКТ</a>
+          </div>
+        </div>
+        <div class="hero-visual reveal" aria-hidden="true">
+          <p class="visual-caption">Сигнал / 01—26</p>
+        </div>
+      </section>
+
+      <section class="intro container reveal" aria-labelledby="intro-title">
+        <p class="eyebrow amber">Не про декор</p>
+        <div class="split">
+          <h2 id="intro-title">Цифровой опыт —<br />это характер<br />в движении.</h2>
+          <p class="copy-shield">Мы не украшаем готовые проекты. Мы помогаем найти собственный язык бренда, а затем превращаем его в сайт, который работает на впечатление и рост.</p>
+        </div>
+      </section>
+
+      <section class="work container" id="work" aria-labelledby="work-title">
+        <div class="section-head reveal"><p class="eyebrow">Избранные работы</p><h2 id="work-title">Заметные<br />в нужный момент.</h2></div>
+        <article class="project project-a reveal"><div><p class="project-number">01 / 2025</p><h3>ТИХАЯ<br />ВОДА</h3></div><p class="copy-shield">Айдентика и интернет-магазин для архитектурной керамики.</p><a href="#contact" aria-label="Обсудить похожий проект Тихая вода">Смотреть ↗</a></article>
+        <article class="project project-b reveal"><div><p class="project-number">02 / 2025</p><h3>СЕВЕР</h3></div><p class="copy-shield">Новая цифровая сцена для гастрономического фестиваля.</p><a href="#contact" aria-label="Обсудить похожий проект Север">Смотреть ↗</a></article>
+        <article class="project project-c reveal"><div><p class="project-number">03 / 2024</p><h3>КРУГ<br />СВЕТА</h3></div><p class="copy-shield">Платформа для фонда, который меняет городскую среду.</p><a href="#contact" aria-label="Обсудить похожий проект Круг света">Смотреть ↗</a></article>
+      </section>
+
+      <section class="approach container" id="approach" aria-labelledby="approach-title">
+        <div class="approach-graphic reveal">
+          <canvas id="approach-particle-sphere" class="approach-particle-sphere" aria-label="Интерактивная сфера из цветных треугольных частиц"></canvas>
+        </div>
+        <div class="approach-copy reveal"><p class="eyebrow amber">Как работаем</p><h2 id="approach-title">Сначала<br />слушаем.<br />Потом усиливаем.</h2><p class="copy-shield">У любой сильной формы есть причина. Мы ищем её вместе с вами — в задаче, в людях, в деталях процесса.</p><ol><li><span>01</span> Находим ядро</li><li><span>02</span> Строим систему</li><li><span>03</span> Запускаем сигнал</li></ol></div>
+      </section>
+
+      <section class="team container" id="team" aria-labelledby="team-title">
+        <div class="section-head reveal"><p class="eyebrow">Люди</p><h2 id="team-title">Маленькая команда.<br />Максимум внимания.</h2></div>
+        <div class="people">
+          <article class="person reveal"><div class="portrait portrait-one"><img src="assets/team-nikita.webp" alt="Никита Росляков" /></div><p class="role">Креативный директор</p><h3>Никита Росляков</h3></article>
+          <article class="person reveal"><div class="portrait portrait-two"><img src="assets/team-anastasia.webp" alt="Анастасия Власова" /></div><p class="role">Дизайн-директор</p><h3>Анастасия Власова</h3></article>
+        </div>
+      </section>
+
+      <section class="contact container reveal" id="contact" aria-labelledby="contact-title">
+        <p class="eyebrow amber">Есть задача?</p>
+        <h2 id="contact-title">Давайте сделаем<br /><em>её успешной.</em></h2>
+        <a class="contact-link" href="mailto:hello@signal.studio">hello@signal.studio <span>↗</span></a>
+      </section>
+    </main>
+
+    <footer class="footer container"><a class="brand" href="#top"><svg class="brand-mark" viewBox="0 0 34 34" aria-hidden="true"><path d="M3 29 17 4l14 25-14-7z" /></svg><span>сигнал</span></a><p>© 2026 Сигнал. Сделано в России.</p><a href="mailto:hello@signal.studio">Написать нам ↗</a></footer>
+  </body>
+</html>
